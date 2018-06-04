@@ -1,0 +1,160 @@
+﻿@{
+    //Layout = null;
+    ViewBag.Title = "InternetNow";
+}
+
+@section scripts {
+    <script src="~/Scripts/jquery.signalR-2.2.2.min.js"></script>        
+    <script src="~/signalr/hubs"></script>
+    <script>
+        $(function () {
+            var chat = $.connection.internetNowHub;
+            chat.client.updateCount = function (num, alpha, flo) {
+                if(flo)
+                    $('#CounterFloat').val(flo)
+                if (alpha)
+                    $('#CounterAlphaNumeric').val(alpha)
+                if (num)
+                    $('#CounterNumber').val(num)
+                console.log(num,alpha, flo);
+            };
+            $.connection.hub.start().done(function () {
+                $('#start').click(function () {
+                    if (!$("#GenerateForm input:checkbox:checked").length > 0) {
+                        alert("Please select atleast one datatype.");
+                        return false;
+                    }
+
+                    $('.glyphicon-refresh').addClass("glyphicon-repeat normal-right-spinner");
+                    $('#start').addClass("disabled");
+                    $('#stop').removeClass("disabled");
+                    $('#generatereport').addClass("disabled");
+                    $.ajax({
+                        url: "/garbage/start",
+                        type: "POST",
+                        dataType: 'json',
+                        data: { "numeric": $("#numeric").is(":checked"), "alphanumeric": $("#alphanumeric").is(":checked"), "checkedfloat": $("#checkedfloat").is(":checked"), "fileSize": $("#fileSize").val() ? $("#fileSize").val() : 0},
+                        success: function (data) {
+                            $('.glyphicon-refresh').removeClass("glyphicon-repeat normal-right-spinner");
+                            $('#start').removeClass("disabled");
+                            $('#stop').addClass("disabled");
+                            console.log(data);
+                            $('#generatereport').removeClass("disabled");
+                        },
+                        error: function (xhr, textStatus, exceptionThrown) {
+                            $('.glyphicon-refresh').removeClass("glyphicon-repeat normal-right-spinner");
+                            $('#start').removeClass("disabled");
+                            $('#stop').addClass("disabled");
+                            alert(JSON.parse(xhr.responseText));
+                        }
+                    });
+                });
+
+
+                $('#stop').click(function () {
+                    $('#stop').addClass("disabled");
+                    $.ajax({
+                        url: "/garbage/stop",
+                        type: "POST",
+                        dataType: 'json',
+                        data: { "stop" : true },
+                        success: function (data) {
+                            $('#generatereport').removeClass("disabled");
+                            $('#start').removeClass("disabled");
+                            $('.glyphicon-refresh').removeClass("glyphicon-repeat normal-right-spinner");
+                            console.log(data);
+                        },
+                        error: function (xhr, textStatus, exceptionThrown) {
+                            $('#start').removeClass("disabled");
+                            $('.glyphicon-refresh').removeClass("glyphicon-repeat normal-right-spinner");
+                            alert(JSON.parse(xhr.responseText));
+                        }
+                    });
+                });
+
+            });
+        });
+    </script>
+}
+
+<div class="row">
+    <form class="form-horizontal" id="GenerateForm">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"> Set Inputs Here </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row col-md-12" >
+                        <div class="col-md-6">
+                            <div class="row">
+                                <h4>Select Types</h4>
+                                <div class="checkbox">
+                                    <label><input type="checkbox" name="numeric" id="numeric">Numeric</label>
+                                </div>
+                                <div class="checkbox">
+                                    <label><input type="checkbox" name="alphanumeric" id="alphanumeric">AlphaNumeric</label>
+                                </div>
+                                <div class="checkbox disabled">
+                                    <label><input type="checkbox" name="checkedfloat" id="checkedfloat">Float</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+
+                            <h4 >Enter File Size</h4>
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="number" required class="form-control" name="fileSize" id="fileSize" />
+                                </div>
+                            </div>
+                            <div class="row">
+                            
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row text-center">
+                        <hr />
+                        <span ><a class="btn btn-success"  id="start"> <i class="glyphicon glyphicon-refresh"></i> &nbsp;Start</a>  &nbsp;</span>
+                        <span><a class="btn btn-danger disabled" id="stop"> <i class="glyphicon glyphicon-ban-circle"></i> &nbsp;Stop</a>  &nbsp;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title"> Live Updates</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="form-group">
+                            <label class="col-md-6 control-label">Counter 1 (Numeric)</label>
+                            <div class="col-md-6">
+                                <input type="number" class="form-control" name="CounterNumber" id="CounterNumber" readonly />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-6 control-label">Counter 2 (AlphaNumeric)</label>
+                            <div class="col-md-6">
+                                <input type="number" class="form-control" name="CounterAlphaNumeric" id="CounterAlphaNumeric" readonly />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-md-6 control-label">Counter 3 (Float)</label>
+                            <div class="col-md-6">
+                                <input type="number" class="form-control" name="CounterFloat" id="CounterFloat" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row text-center">
+                        <hr />
+                        <span><a href="/Garbage/GenerateReport" class="btn btn-lg btn-success disabled" id="generatereport"> <i class="glyphicon glyphicon-record"></i> &nbsp;Generate Report</a>  &nbsp;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    </div>
